@@ -1,8 +1,14 @@
 from rest_framework import mixins
 from rest_framework.viewsets import GenericViewSet
 
-from airport_service.models import Crew, Airport
-from airport_service.serializers import CrewSerializer, AirportSerializer
+from airport_service.models import Crew, Airport, Route
+from airport_service.serializers import (
+    CrewSerializer,
+    AirportSerializer,
+    RouteListSerializer,
+    RouteCreateSerializer,
+    RouteDetailSerializer,
+)
 
 
 class CrewViewSet(
@@ -23,3 +29,20 @@ class AirportViewSet(
 ):
     queryset = Airport.objects.all()
     serializer_class = AirportSerializer
+
+
+class RouteViewSet(
+    mixins.ListModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.CreateModelMixin,
+    GenericViewSet
+):
+    queryset = Route.objects.all()
+
+    def get_serializer_class(self):
+        if self.action == "list":
+            return RouteListSerializer
+        if self.action == "create":
+            return RouteCreateSerializer
+        if self.action == "retrieve":
+            return RouteDetailSerializer
