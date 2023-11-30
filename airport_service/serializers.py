@@ -6,7 +6,7 @@ from airport_service.models import (
     Airport,
     Route,
     AirplaneType,
-    Airplane,
+    Airplane, Flight,
 )
 
 
@@ -82,3 +82,31 @@ class AirplaneCreateSerializer(AirplaneListSerializer):
 
 class AirplaneDetailSerializer(AirplaneListSerializer):
     airplane_type = AirplaneTypeSerializer(many=False, read_only=True)
+
+
+class FLightCreateSerializer(serializers.ModelSerializer):
+
+    def validate(self, attrs):
+        data = super(FLightCreateSerializer, self).validate(attrs)
+        Flight.validate_arrival(
+            departure_time=attrs["departure_time"],
+            arrival_time=attrs["arrival_time"],
+            error_to_raise=ValidationError
+        )
+        return data
+
+    class Meta:
+        model = Flight
+        fields = ("id", "route", "airplane", "departure_time", "arrival_time", "crew")
+
+
+class FlightListSerializer(FLightCreateSerializer):
+    route = RouteListSerializer(many=False, read_only=True)
+    airplane = serializers.StringRelatedField(many=False, read_only=True)
+    crew = serializers.StringRelatedField(many=True, read_only=True)
+
+
+class FLightDetailSerializer(FLightCreateSerializer):
+    route = RouteDetailSerializer(many=False, read_only=True)
+    airplane = AirplaneDetailSerializer(many=False, read_only=True)
+    crew = CrewSerializer(many=True, read_only=True)
