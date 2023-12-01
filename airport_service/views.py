@@ -8,6 +8,7 @@ from airport_service.models import (
     AirplaneType,
     Airplane,
     Flight,
+    Order,
 )
 from airport_service.serializers import (
     CrewSerializer,
@@ -22,6 +23,9 @@ from airport_service.serializers import (
     FlightListSerializer,
     FLightCreateSerializer,
     FLightDetailSerializer,
+    OrderCreateSerializer,
+    OrderListSerializer,
+    OrderDetailSerializer,
 
 )
 
@@ -57,8 +61,10 @@ class RouteViewSet(
     def get_serializer_class(self):
         if self.action == "list":
             return RouteListSerializer
+
         if self.action == "create":
             return RouteCreateSerializer
+
         if self.action == "retrieve":
             return RouteDetailSerializer
 
@@ -84,8 +90,10 @@ class AirplaneViewSet(
     def get_serializer_class(self):
         if self.action == "list":
             return AirplaneListSerializer
+
         if self.action == "create":
             return AirplaneCreateSerializer
+
         if self.action == "retrieve":
             return AirplaneDetailSerializer
 
@@ -101,7 +109,39 @@ class FlightViewSet(
     def get_serializer_class(self):
         if self.action == "list":
             return FlightListSerializer
+
         if self.action == "create":
             return FLightCreateSerializer
+
         if self.action == "retrieve":
             return FLightDetailSerializer
+
+
+class OrderViewSet(
+    mixins.ListModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.CreateModelMixin,
+    GenericViewSet
+):
+    queryset = Order.objects.all()
+    serializer_class = OrderCreateSerializer
+
+    def get_queryset(self):
+        queryset = self.queryset.filter(
+            user=self.request.user
+        )
+
+        return queryset
+
+    def get_serializer_class(self):
+        if self.action == "list":
+            return OrderListSerializer
+
+        if self.action == "create":
+            return OrderCreateSerializer
+
+        if self.action == "retrieve":
+            return OrderDetailSerializer
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
