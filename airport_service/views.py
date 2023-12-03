@@ -1,3 +1,5 @@
+from django.db.models import Value
+from django.db.models.functions import Concat
 from rest_framework import mixins
 from rest_framework.viewsets import GenericViewSet
 
@@ -38,6 +40,19 @@ class CrewViewSet(
 ):
     queryset = Crew.objects.all()
     serializer_class = CrewSerializer
+
+    def get_queryset(self):
+        queryset = self.queryset
+
+        full_name = self.request.query_params.get("full_name")
+        if full_name:
+            queryset = queryset.annotate(
+                full_name=Concat("first_name", Value(" "), "last_name")
+            )
+
+            queryset = queryset.filter(full_name__icontains=full_name)
+
+        return queryset
 
 
 class AirportViewSet(
