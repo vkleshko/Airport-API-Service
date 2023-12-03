@@ -10,6 +10,9 @@ class Crew(models.Model):
     def __str__(self):
         return f"{self.first_name} {self.last_name}"
 
+    def full_name(self, value):
+        self.full_name = value
+
 
 class Airport(models.Model):
     name = models.CharField(max_length=255)
@@ -155,7 +158,7 @@ class Ticket(models.Model):
     )
 
     class Meta:
-        unique_together = ("seat", "flight")
+        unique_together = ("seat", "row", "flight")
         ordering = ("seat",)
 
     def __str__(self):
@@ -176,7 +179,7 @@ class Ticket(models.Model):
 
         if not (1 <= row <= airplane_rows):
             raise error_to_raise(
-                {"seat": f"row must be in range [1, {airplane_rows}]"}
+                {"row": f"row must be in range [1, {airplane_rows}]"}
             )
 
     def clean(self):
