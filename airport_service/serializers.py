@@ -29,7 +29,7 @@ class AirportSerializer(serializers.ModelSerializer):
 class RouteCreateSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
-        data = super(RouteListSerializer, self).validate(attrs)
+        data = super(RouteCreateSerializer, self).validate(attrs)
         Route.validate_destination(
             source=attrs["source"],
             destination=attrs["destination"],
