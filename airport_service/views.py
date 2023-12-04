@@ -82,6 +82,20 @@ class RouteViewSet(
 ):
     queryset = Route.objects.all()
 
+    def get_queryset(self):
+        queryset = self.queryset
+
+        from_ = self.request.query_params.get("from")
+        to = self.request.query_params.get("to")
+
+        if from_:
+            queryset = queryset.filter(source__name__icontains=from_)
+
+        if to:
+            queryset = queryset.filter(destination__name__icontains=to)
+
+        return queryset
+
     def get_serializer_class(self):
         if self.action == "list":
             return RouteListSerializer
