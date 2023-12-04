@@ -26,17 +26,7 @@ class AirportSerializer(serializers.ModelSerializer):
         fields = ("id", "name", "closet_big_city")
 
 
-class RouteListSerializer(serializers.ModelSerializer):
-    source = serializers.SlugRelatedField(
-        many=False,
-        read_only=True,
-        slug_field="name"
-    )
-    destination = serializers.SlugRelatedField(
-        many=False,
-        read_only=True,
-        slug_field="name"
-    )
+class RouteCreateSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         data = super(RouteListSerializer, self).validate(attrs)
@@ -52,12 +42,20 @@ class RouteListSerializer(serializers.ModelSerializer):
         fields = ("id", "source", "destination", "distance")
 
 
-class RouteCreateSerializer(RouteListSerializer):
-    source = AirportSerializer(many=False, read_only=False)
-    destination = AirportSerializer(many=False, read_only=False)
+class RouteListSerializer(RouteCreateSerializer):
+    source = serializers.SlugRelatedField(
+        many=False,
+        read_only=True,
+        slug_field="name"
+    )
+    destination = serializers.SlugRelatedField(
+        many=False,
+        read_only=True,
+        slug_field="name"
+    )
 
 
-class RouteDetailSerializer(RouteListSerializer):
+class RouteDetailSerializer(RouteCreateSerializer):
     source = AirportSerializer(many=False, read_only=True)
     destination = AirportSerializer(many=False, read_only=True)
 
