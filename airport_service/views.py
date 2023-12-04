@@ -64,6 +64,15 @@ class AirportViewSet(
     queryset = Airport.objects.all()
     serializer_class = AirportSerializer
 
+    def get_queryset(self):
+        queryset = self.queryset
+
+        name = self.request.query_params.get("name")
+        if name:
+            queryset = queryset.filter(name__icontains=name)
+
+        return queryset
+
 
 class RouteViewSet(
     mixins.ListModelMixin,
