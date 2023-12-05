@@ -1,4 +1,6 @@
-from django.db.models import Value, F
+from datetime import datetime
+
+from django.db.models import Value
 from django.db.models.functions import Concat
 from rest_framework import mixins
 from rest_framework.viewsets import GenericViewSet
@@ -167,6 +169,44 @@ class FlightViewSet(
     GenericViewSet
 ):
     queryset = Flight.objects.all()
+
+    def get_queryset(self):
+        queryset = self.queryset
+
+        from_ = self.request.query_params.get("from")
+        to = self.request.query_params.get("to")
+        departure = self.request.query_params.get("departure_time")
+        arrival = self.request.query_params.get("arrival_time")
+
+        if from_:
+            queryset = queryset.filter(
+                route__source__closet_big_city__icontains=from_
+            )
+
+        if to:
+            queryset = queryset.filter(
+                route__destination__closet_big_city__icontains=to
+            )
+
+        if departure:
+            departure_datetime = datetime.strptime(
+                departure, "%Y-%m-%dT%H:%M:%SZ"
+            )
+
+            queryset = queryset.filter(
+                departure_time=departure_datetime
+            )
+
+        if arrival:
+            arrival_datetime = datetime.strptime(
+                arrival, "%Y-%m-%dT%H:%M:%SZ"
+            )
+
+            queryset = queryset.filter(
+                arrival_time=arrival_datetime
+            )
+
+        return queryset
 
     def get_serializer_class(self):
         if self.action == "list":
