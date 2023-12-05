@@ -1,4 +1,4 @@
-from django.db.models import Value
+from django.db.models import Value, F
 from django.db.models.functions import Concat
 from rest_framework import mixins
 from rest_framework.viewsets import GenericViewSet
@@ -133,6 +133,21 @@ class AirplaneViewSet(
     GenericViewSet
 ):
     queryset = Airplane.objects.all()
+
+    def get_queryset(self):
+        queryset = self.queryset
+
+        name = self.request.query_params.get("name")
+        airplane_type = self.request.query_params.get("airplane_type")
+        if name:
+            queryset = queryset.filter(name__icontains=name)
+
+        if airplane_type:
+            queryset = queryset.filter(
+                airplane_type__name__icontains=airplane_type
+            )
+
+        return queryset
 
     def get_serializer_class(self):
         if self.action == "list":
