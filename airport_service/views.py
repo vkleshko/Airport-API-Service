@@ -3,6 +3,7 @@ from datetime import datetime
 from django.db.models import Value
 from django.db.models.functions import Concat
 from rest_framework import mixins
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.viewsets import GenericViewSet
 
 from airport_service.models import (
@@ -34,6 +35,12 @@ from airport_service.serializers import (
 )
 
 
+class ResultsSetPagination(PageNumberPagination):
+    page_size = 10
+    page_size_query_param = 'page_size'
+    max_page_size = 1000
+
+
 class CrewViewSet(
     mixins.ListModelMixin,
     mixins.RetrieveModelMixin,
@@ -42,6 +49,7 @@ class CrewViewSet(
 ):
     queryset = Crew.objects.all()
     serializer_class = CrewSerializer
+    pagination_class = ResultsSetPagination
 
     def get_queryset(self):
         queryset = self.queryset
@@ -65,6 +73,7 @@ class AirportViewSet(
 ):
     queryset = Airport.objects.all()
     serializer_class = AirportSerializer
+    pagination_class = ResultsSetPagination
 
     def get_queryset(self):
         queryset = self.queryset
@@ -85,6 +94,7 @@ class RouteViewSet(
     queryset = Route.objects.select_related(
         "source", "destination"
     )
+    pagination_class = ResultsSetPagination
 
     def get_queryset(self):
         queryset = self.queryset
@@ -119,6 +129,7 @@ class AirplaneTypeViewSet(
 ):
     queryset = AirplaneType.objects.all()
     serializer_class = AirplaneTypeSerializer
+    pagination_class = ResultsSetPagination
 
     def get_queryset(self):
         queryset = self.queryset
@@ -137,6 +148,7 @@ class AirplaneViewSet(
     GenericViewSet
 ):
     queryset = Airplane.objects.select_related("airplane_type")
+    pagination_class = ResultsSetPagination
 
     def get_queryset(self):
         queryset = self.queryset
@@ -173,6 +185,7 @@ class FlightViewSet(
     queryset = Flight.objects.select_related(
         "route", "airplane"
     ).prefetch_related("crew")
+    pagination_class = ResultsSetPagination
 
     def get_queryset(self):
         queryset = self.queryset
@@ -232,6 +245,7 @@ class OrderViewSet(
     queryset = Order.objects.select_related(
         "user"
     ).prefetch_related("tickets__flight")
+    pagination_class = ResultsSetPagination
 
     def get_queryset(self):
         queryset = self.queryset.filter(
