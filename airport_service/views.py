@@ -89,14 +89,14 @@ class RouteViewSet(
     def get_queryset(self):
         queryset = self.queryset
 
-        from_ = self.request.query_params.get("from")
-        to = self.request.query_params.get("to")
+        source_name = self.request.query_params.get("from")
+        destination_name = self.request.query_params.get("to")
 
-        if from_:
-            queryset = queryset.filter(source__name__icontains=from_)
+        if source_name:
+            queryset = queryset.filter(source__name__icontains=source_name)
 
-        if to:
-            queryset = queryset.filter(destination__name__icontains=to)
+        if destination_name:
+            queryset = queryset.filter(destination__name__icontains=destination_name)
 
         return queryset
 
@@ -136,7 +136,7 @@ class AirplaneViewSet(
     mixins.CreateModelMixin,
     GenericViewSet
 ):
-    queryset = Airplane.objects.all()
+    queryset = Airplane.objects.select_related("airplane_type")
 
     def get_queryset(self):
         queryset = self.queryset
