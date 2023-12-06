@@ -82,7 +82,9 @@ class RouteViewSet(
     mixins.CreateModelMixin,
     GenericViewSet
 ):
-    queryset = Route.objects.all()
+    queryset = Route.objects.select_related(
+        "source", "destination"
+    )
 
     def get_queryset(self):
         queryset = self.queryset
