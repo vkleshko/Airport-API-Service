@@ -170,7 +170,9 @@ class FlightViewSet(
     mixins.CreateModelMixin,
     GenericViewSet
 ):
-    queryset = Flight.objects.all()
+    queryset = Flight.objects.select_related(
+        "route", "airplane"
+    ).prefetch_related("crew")
 
     def get_queryset(self):
         queryset = self.queryset
