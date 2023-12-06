@@ -229,8 +229,9 @@ class OrderViewSet(
     mixins.CreateModelMixin,
     GenericViewSet
 ):
-    queryset = Order.objects.all()
-    serializer_class = OrderCreateSerializer
+    queryset = Order.objects.select_related(
+        "user"
+    ).prefetch_related("tickets__flight")
 
     def get_queryset(self):
         queryset = self.queryset.filter(
