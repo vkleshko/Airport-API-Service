@@ -2,8 +2,12 @@ from datetime import datetime
 
 from django.db.models import Value
 from django.db.models.functions import Concat
-from rest_framework import mixins
+from django.shortcuts import get_object_or_404
+from django.utils import timezone
+from rest_framework import mixins, status
+from rest_framework.decorators import api_view
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 
 from airport_service.models import (
@@ -36,7 +40,7 @@ from airport_service.serializers import (
 
 
 class ResultsSetPagination(PageNumberPagination):
-    page_size = 10
+    page_size = 2
     page_size_query_param = 'page_size'
     max_page_size = 1000
 
@@ -176,32 +180,33 @@ class AirplaneViewSet(
             return AirplaneDetailSerializer
 
 
-class FlightViewSet(
-    mixins.ListModelMixin,
-    mixins.RetrieveModelMixin,
-    mixins.CreateModelMixin,
-    GenericViewSet
-):
-    queryset = Flight.objects.select_related(
-        "route", "airplane"
-    ).prefetch_related("crew")
-    pagination_class = ResultsSetPagination
+@api_view(["GET", "POST"])
+def flight_list(request):
+    """Get list with flights whose airplanes have not yet departed"""
+    if request.method == "GET":
+        paginator = ResultsSetPagination()
 
-    def get_queryset(self):
-        queryset = self.queryset
+        queryset = Flight.objects.select_related(
+            "route__source", "route__destination", "airplane"
+        ).prefetch_related("crew")
 
-        from_ = self.request.query_params.get("from")
-        to = self.request.query_params.get("to")
-        departure = self.request.query_params.get("departure_time")
-        arrival = self.request.query_params.get("arrival_time")
+        current_time = timezone.now()
+
+        flights = queryset.filter(
+            departure_time__gt=current_time)
+
+        from_ = request.query_params.get("from")
+        to = request.query_params.get("to")
+        departure = request.query_params.get("departure_time")
+        arrival = request.query_params.get("arrival_time")
 
         if from_:
-            queryset = queryset.filter(
+            flights = flights.filter(
                 route__source__closet_big_city__icontains=from_
             )
 
         if to:
-            queryset = queryset.filter(
+            flights = flights.filter(
                 route__destination__closet_big_city__icontains=to
             )
 
@@ -210,7 +215,7 @@ class FlightViewSet(
                 departure, "%Y-%m-%dT%H:%M:%SZ"
             )
 
-            queryset = queryset.filter(
+            flights = flights.filter(
                 departure_time=departure_datetime
             )
 
@@ -219,21 +224,45 @@ class FlightViewSet(
                 arrival, "%Y-%m-%dT%H:%M:%SZ"
             )
 
-            queryset = queryset.filter(
+            flights = flights.filter(
                 arrival_time=arrival_datetime
             )
 
-        return queryset
+        result_page = paginator.paginate_queryset(
+            queryset=flights, request=request
+        )
 
-    def get_serializer_class(self):
-        if self.action == "list":
-            return FlightListSerializer
+        serializer = FlightListSerializer(result_page, many=True)
 
-        if self.action == "create":
-            return FLightCreateSerializer
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
-        if self.action == "retrieve":
-            return FLightDetailSerializer
+    if request.method == "POST":
+        serializer = FLightCreateSerializer(data=request.data)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(
+                serializer.data, status=status.HTTP_201_CREATED
+            )
+
+        return Response(
+            serializer.errors, status=status.HTTP_400_BAD_REQUEST
+        )
+
+
+@api_view(["GET"])
+def flight_detail(request, pk):
+    if request.method == "GET":
+        current_time = timezone.now()
+
+        flights = Flight.objects.filter(
+            departure_time__gt=current_time)
+
+        flight = get_object_or_404(flights, id=pk)
+
+        serializer = FLightDetailSerializer(flight)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class OrderViewSet(
