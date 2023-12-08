@@ -106,10 +106,24 @@ class FlightListSerializer(FLightCreateSerializer):
     crew = serializers.StringRelatedField(many=True, read_only=True)
 
 
+class TakenSeatSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Ticket
+        fields = ("row", "seat")
+
+
 class FLightDetailSerializer(FLightCreateSerializer):
+    taken_ticket = TakenSeatSerializer(
+        many=True,
+        read_only=True,
+        source="tickets"
+    )
     route = RouteDetailSerializer(many=False, read_only=True)
     airplane = AirplaneDetailSerializer(many=False, read_only=True)
     crew = CrewSerializer(many=True, read_only=True)
+
+    class Meta(FLightCreateSerializer.Meta):
+        fields = FLightCreateSerializer.Meta.fields + ("taken_ticket",)
 
 
 class TicketCreateSerializer(serializers.ModelSerializer):
