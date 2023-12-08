@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from django.db.models import Value
+from django.db.models import Value, Count, F
 from django.db.models.functions import Concat
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
@@ -192,8 +192,13 @@ def flight_list(request):
 
         current_time = timezone.now()
 
-        flights = queryset.filter(
-            departure_time__gt=current_time)
+        flights = (
+            queryset
+            .filter(departure_time__gt=current_time)
+            .annotate(
+                available_tickets=F("airplane__rows") * F("airplane__seats_in_rows") - Count("tickets")
+            )
+        )
 
         from_ = request.query_params.get("from")
         to = request.query_params.get("to")
