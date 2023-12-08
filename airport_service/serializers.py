@@ -1,3 +1,5 @@
+from django.utils import timezone
+
 from django.db import transaction
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
@@ -133,6 +135,13 @@ class FLightDetailSerializer(FLightCreateSerializer):
 class TicketCreateSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         data = super(TicketCreateSerializer, self).validate(attrs)
+        flight = data.get("flight")
+
+        if flight and flight.departure_time <= timezone.now():
+            raise ValidationError(
+                "Cannot create a ticket for a flight that has already departed."
+            )
+
         Ticket.validate_seat_and_row(
             seat=attrs["seat"],
             row=attrs["row"],
@@ -157,7 +166,7 @@ class TicketListSerializer(TicketCreateSerializer):
     )
 
     class Meta(TicketCreateSerializer.Meta):
-        fields = ("id", "row", "seat", "source", "destination")
+        fields = ("id", "row", "seat", "source", "destination", "flight")
 
 
 class TicketDetailSerializer(TicketCreateSerializer):
