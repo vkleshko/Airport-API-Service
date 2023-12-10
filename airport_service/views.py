@@ -4,6 +4,7 @@ from django.db.models import Value, Count, F
 from django.db.models.functions import Concat
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
+from drf_spectacular.utils import extend_schema, OpenApiParameter
 from rest_framework import mixins, status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.pagination import PageNumberPagination
@@ -56,7 +57,7 @@ class CrewViewSet(
     queryset = Crew.objects.all()
     serializer_class = CrewSerializer
     pagination_class = ResultsSetPagination
-    permission_classes = (IsAdminUser, )
+    permission_classes = (IsAdminUser,)
 
     def get_queryset(self):
         queryset = self.queryset
@@ -71,6 +72,18 @@ class CrewViewSet(
 
         return queryset
 
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                "full_name",
+                type=str,
+                description="Filtering by full_name (ex. ?full_name=Vika Bevz)"
+            )
+        ]
+    )
+    def list(self, request):
+        return super().list(request)
+
 
 class AirportViewSet(
     mixins.ListModelMixin,
@@ -81,7 +94,7 @@ class AirportViewSet(
     queryset = Airport.objects.all()
     serializer_class = AirportSerializer
     pagination_class = ResultsSetPagination
-    permission_classes = (IsAdminUser, )
+    permission_classes = (IsAdminUser,)
 
     def get_queryset(self):
         queryset = self.queryset
@@ -91,6 +104,18 @@ class AirportViewSet(
             queryset = queryset.filter(name__icontains=name)
 
         return queryset
+
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                "name",
+                type=str,
+                description="Filtering by name (ex. ?name=Kansas)"
+            )
+        ]
+    )
+    def list(self, request):
+        return super().list(request)
 
 
 class RouteViewSet(
@@ -103,7 +128,7 @@ class RouteViewSet(
         "source", "destination"
     )
     pagination_class = ResultsSetPagination
-    permission_classes = (IsAdminUser, )
+    permission_classes = (IsAdminUser,)
 
     def get_queryset(self):
         queryset = self.queryset
@@ -111,11 +136,11 @@ class RouteViewSet(
         source_name = self.request.query_params.get("from")
         destination_name = self.request.query_params.get("to")
 
-        if source_name:
-            queryset = queryset.filter(source__name__icontains=source_name)
-
-        if destination_name:
-            queryset = queryset.filter(destination__name__icontains=destination_name)
+        if source_name and destination_name:
+            queryset = queryset.filter(
+                source__name__icontains=source_name,
+                destination__name__icontains=destination_name
+            )
 
         return queryset
 
@@ -129,6 +154,23 @@ class RouteViewSet(
         if self.action == "retrieve":
             return RouteDetailSerializer
 
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                "from",
+                type=str,
+                description="Filtering by source (ex. ?from=Kansas)"
+            ),
+            OpenApiParameter(
+                "to",
+                type=str,
+                description="Filtering by destination (ex. ?to=Nevada)"
+            )
+        ]
+    )
+    def list(self, request):
+        return super().list(request)
+
 
 class AirplaneTypeViewSet(
     mixins.ListModelMixin,
@@ -139,7 +181,7 @@ class AirplaneTypeViewSet(
     queryset = AirplaneType.objects.all()
     serializer_class = AirplaneTypeSerializer
     pagination_class = ResultsSetPagination
-    permission_classes = (IsAdminUser, )
+    permission_classes = (IsAdminUser,)
 
     def get_queryset(self):
         queryset = self.queryset
@@ -150,6 +192,18 @@ class AirplaneTypeViewSet(
 
         return queryset
 
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                "name",
+                type=str,
+                description="Filtering by name (ex. ?name=Wide-Body)"
+            )
+        ]
+    )
+    def list(self, request):
+        return super().list(request)
+
 
 class AirplaneViewSet(
     mixins.ListModelMixin,
@@ -159,7 +213,7 @@ class AirplaneViewSet(
 ):
     queryset = Airplane.objects.select_related("airplane_type")
     pagination_class = ResultsSetPagination
-    permission_classes = (IsAdminUser, )
+    permission_classes = (IsAdminUser,)
 
     def get_queryset(self):
         queryset = self.queryset
@@ -186,7 +240,48 @@ class AirplaneViewSet(
         if self.action == "retrieve":
             return AirplaneDetailSerializer
 
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                "name",
+                type=str,
+                description="Filtering by name (ex. ?name=Boing)"
+            ),
+            OpenApiParameter(
+                "airplane_type",
+                type=str,
+                description="Filtering by airplane_type (ex. ?airplane_type=Wide-Body)"
+            )
+        ]
+    )
+    def list(self, request):
+        return super().list(request)
 
+
+@extend_schema(
+    parameters=[
+        OpenApiParameter(
+            "from",
+            type=str,
+            description="Filter flights by source city (ex. ?city=Kyiv)",
+        ),
+        OpenApiParameter(
+            "to",
+            type=str,
+            description="Filter flights by destination city (ex. ?city=London)",
+        ),
+        OpenApiParameter(
+            "departure_time",
+            type=str,
+            description="Filter flights by departure time (format: %Y-%m-%dT%H:%M:%SZ)",
+        ),
+        OpenApiParameter(
+            "arrival_time",
+            type=str,
+            description="Filter flights by arrival time (format: %Y-%m-%dT%H:%M:%SZ)",
+        ),
+    ],
+)
 @api_view(["GET", "POST"])
 @permission_classes(
     (IsAdminOrIfAuthenticatedReadOnly,)
@@ -206,7 +301,8 @@ def flight_list(request):
             queryset
             .filter(departure_time__gt=current_time)
             .annotate(
-                available_tickets=F("airplane__rows") * F("airplane__seats_in_rows") - Count("tickets")
+                available_tickets=F("airplane__rows")
+                                  * F("airplane__seats_in_rows") - Count("tickets")
             )
         )
 
@@ -293,7 +389,7 @@ class OrderViewSet(
         "user"
     ).prefetch_related("tickets__flight")
     pagination_class = ResultsSetPagination
-    permission_classes = (IsAuthenticated, )
+    permission_classes = (IsAuthenticated,)
 
     def get_queryset(self):
         queryset = self.queryset.filter(
