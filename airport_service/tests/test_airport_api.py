@@ -1,44 +1,44 @@
 from django.contrib.auth import get_user_model
 from django.urls import reverse
-from rest_framework import status
 from django.test import TestCase
+from rest_framework import status
 from rest_framework.test import APIClient
 
-from airport_service.models import Crew
-from airport_service.serializers import CrewSerializer
+from airport_service.models import Airport
+from airport_service.serializers import AirportSerializer
 
-CREW_URL = reverse("airport_service:crew-list")
+AIRPORT_URL = reverse("airport_service:airport-list")
 
 
-def detail_url(crew_id: int):
+def detail_url(airport_id: int):
     return reverse(
-        "airport_service:crew-detail", args=[crew_id]
+        "airport_service:airport-detail", args=[airport_id]
     )
 
 
-def sample_crew(**params):
+def sample_airport(**params):
     defaults = {
-        "first_name": "test",
-        "last_name": "test",
+        "name": "test_name",
+        "closet_big_city": "test_city"
     }
     defaults.update(params)
 
-    return Crew.objects.create(**defaults)
+    return Airport.objects.create(**defaults)
 
 
-class UnauthenticatedCrewApiTests(TestCase):
+class UnauthenticatedAirportApiTests(TestCase):
     def setUp(self) -> None:
         self.client = APIClient()
 
     def test_auth_required(self):
-        res = self.client.get(CREW_URL)
+        res = self.client.get(AIRPORT_URL)
 
         self.assertEqual(
             res.status_code, status.HTTP_401_UNAUTHORIZED
         )
 
 
-class AuthenticatedCrewApiTests(TestCase):
+class AuthenticatedAirportApiTests(TestCase):
     def setUp(self) -> None:
         self.client = APIClient()
         self.user = get_user_model().objects.create_user(
@@ -48,30 +48,30 @@ class AuthenticatedCrewApiTests(TestCase):
 
         self.client.force_authenticate(self.user)
 
-    def test_crew_list(self):
-        sample_crew()
-        sample_crew(first_name="test1")
+    def test_airport_list(self):
+        sample_airport()
+        sample_airport(name="test_name2")
 
-        res = self.client.get(CREW_URL)
+        res = self.client.get(AIRPORT_URL)
 
-        crews = Crew.objects.all()
-        serializer = CrewSerializer(crews, many=True)
+        airports = Airport.objects.all()
+        serializer = AirportSerializer(airports, many=True)
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(res.data["results"], serializer.data)
 
     def test_create_crew_forbidden(self):
         payload = {
-            "first_name": "test",
-            "last_name": "test1"
+            "name": "test_name",
+            "closet_big_city": "test_city"
         }
 
-        res = self.client.post(CREW_URL, payload)
+        res = self.client.post(AIRPORT_URL, payload)
 
         self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
 
 
-class AdminCrewApiTests(TestCase):
+class AdminAirportApiTests(TestCase):
     def setUp(self) -> None:
         self.client = APIClient()
         self.user = get_user_model().objects.create_user(
@@ -82,23 +82,23 @@ class AdminCrewApiTests(TestCase):
 
         self.client.force_authenticate(self.user)
 
-    def test_create_crew(self):
+    def test_create_airport(self):
         payload = {
-            "first_name": "test",
-            "last_name": "test1"
+            "name": "test_name",
+            "closet_big_city": "test_city"
         }
 
-        res = self.client.post(CREW_URL, payload)
-        crew = Crew.objects.get(id=res.data["id"])
+        res = self.client.post(AIRPORT_URL, payload)
+        airport = Airport.objects.get(id=res.data["id"])
 
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
         for key in payload:
-            self.assertEqual(res.data[key], getattr(crew, key))
+            self.assertEqual(res.data[key], getattr(airport, key))
 
     def test_delete_crew_not_allowed(self):
-        crew = sample_crew()
+        airport = sample_airport()
 
-        url = detail_url(crew.id)
+        url = detail_url(airport.id)
         res = self.client.delete(url)
 
         self.assertEquals(
