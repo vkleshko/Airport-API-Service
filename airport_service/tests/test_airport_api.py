@@ -19,7 +19,7 @@ def detail_url(airport_id: int):
 def sample_airport(**params):
     defaults = {
         "name": "test_name",
-        "closet_big_city": "test_city"
+        "closest_big_city": "test_city"
     }
     defaults.update(params)
 
@@ -63,7 +63,7 @@ class AuthenticatedAirportApiTests(TestCase):
     def test_create_crew_forbidden(self):
         payload = {
             "name": "test_name",
-            "closet_big_city": "test_city"
+            "closest_big_city": "test_city"
         }
 
         res = self.client.post(AIRPORT_URL, payload)
@@ -85,7 +85,7 @@ class AdminAirportApiTests(TestCase):
     def test_create_airport(self):
         payload = {
             "name": "test_name",
-            "closet_big_city": "test_city"
+            "closest_big_city": "test_city"
         }
 
         res = self.client.post(AIRPORT_URL, payload)
@@ -94,6 +94,18 @@ class AdminAirportApiTests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
         for key in payload:
             self.assertEqual(res.data[key], getattr(airport, key))
+
+    def test_create_same_airport_raises_error(self):
+        payload = {
+            "name": "test_name",
+            "closest_big_city": "test_city"
+        }
+
+        res_1 = self.client.post(AIRPORT_URL, payload)
+        res_2 = self.client.post(AIRPORT_URL, payload)
+
+        self.assertEqual(res_1.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(res_2.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_delete_crew_not_allowed(self):
         airport = sample_airport()

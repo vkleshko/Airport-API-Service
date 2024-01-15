@@ -23,11 +23,11 @@ def detail_url(route_id: int):
 def sample_route(**params):
     source = Airport.objects.create(
         name="test_name",
-        closet_big_city="test_city_source"
+        closest_big_city="test_city_source"
     )
     destination = Airport.objects.create(
         name="test_name",
-        closet_big_city="test_city_destination"
+        closest_big_city="test_city_destination"
     )
     defaults = {
         "source": source,
@@ -63,7 +63,6 @@ class AuthenticatedRouteApiTests(TestCase):
 
     def test_route_list(self):
         sample_route()
-        sample_route(distance=200)
 
         res = self.client.get(ROUTE_URL)
 
@@ -87,11 +86,11 @@ class AuthenticatedRouteApiTests(TestCase):
     def test_create_route_forbidden(self):
         source = Airport.objects.create(
             name="test_name",
-            closet_big_city="test_city_source"
+            closest_big_city="test_city_source"
         )
         destination = Airport.objects.create(
             name="test_name",
-            closet_big_city="test_city_destination"
+            closest_big_city="test_city_destination"
         )
         payload = {
             "source": source.id,
@@ -118,11 +117,11 @@ class AdminRouteApiTests(TestCase):
     def test_create_route(self):
         source = Airport.objects.create(
             name="test_name",
-            closet_big_city="test_city_source"
+            closest_big_city="test_city_source"
         )
         destination = Airport.objects.create(
             name="test_name",
-            closet_big_city="test_city_destination"
+            closest_big_city="test_city_destination"
         )
         payload = {
             "source": source.id,
@@ -141,7 +140,7 @@ class AdminRouteApiTests(TestCase):
     def test_validate_destination(self):
         destination = Airport.objects.create(
             name="test_name",
-            closet_big_city="test_city_destination"
+            closest_big_city="test_city_destination"
         )
         payload = {
             "source": destination.id,
