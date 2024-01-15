@@ -7,7 +7,8 @@ from rest_framework.test import APIClient
 from airport_service.models import Route, Airport
 from airport_service.serializers import (
     RouteListSerializer,
-    RouteDetailSerializer
+    RouteDetailSerializer,
+    RouteCreateSerializer
 )
 
 ROUTE_URL = reverse("airport_service:route-list")
@@ -130,8 +131,27 @@ class AdminRouteApiTests(TestCase):
         }
 
         res = self.client.post(ROUTE_URL, payload)
+        route = Route.objects.get(id=res.data["id"])
+        serializer = RouteCreateSerializer(route)
 
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        for key in payload:
+            self.assertEqual(res.data[key], serializer.data[key])
+
+    def test_validate_destination(self):
+        destination = Airport.objects.create(
+            name="test_name",
+            closet_big_city="test_city_destination"
+        )
+        payload = {
+            "source": destination.id,
+            "destination": destination.id,
+            "distance": 100
+        }
+
+        res = self.client.post(ROUTE_URL, payload)
+
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_delete_route_not_allowed(self):
         route = sample_route()
