@@ -60,7 +60,7 @@ class AuthenticatedAirportApiTests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(res.data["results"], serializer.data)
 
-    def test_create_crew_forbidden(self):
+    def test_create_airport_forbidden(self):
         payload = {
             "name": "test_name",
             "closest_big_city": "test_city"
@@ -107,7 +107,7 @@ class AdminAirportApiTests(TestCase):
         self.assertEqual(res_1.status_code, status.HTTP_201_CREATED)
         self.assertEqual(res_2.status_code, status.HTTP_400_BAD_REQUEST)
 
-    def test_delete_crew_not_allowed(self):
+    def test_delete_airport_not_allowed(self):
         airport = sample_airport()
 
         url = detail_url(airport.id)

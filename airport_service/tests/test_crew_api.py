@@ -95,6 +95,18 @@ class AdminCrewApiTests(TestCase):
         for key in payload:
             self.assertEqual(res.data[key], getattr(crew, key))
 
+    def test_create_same_crew_raises_error(self):
+        payload = {
+            "first_name": "test",
+            "last_name": "test1"
+        }
+
+        res_1 = self.client.post(CREW_URL, payload)
+        res_2 = self.client.post(CREW_URL, payload)
+
+        self.assertEqual(res_1.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(res_2.status_code, status.HTTP_400_BAD_REQUEST)
+
     def test_delete_crew_not_allowed(self):
         crew = sample_crew()
 

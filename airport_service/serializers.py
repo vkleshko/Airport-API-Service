@@ -21,6 +21,12 @@ class CrewSerializer(serializers.ModelSerializer):
     class Meta:
         model = Crew
         fields = ("id", "first_name", "last_name")
+        validators = [
+            UniqueTogetherValidator(
+                queryset=Crew.objects.all(),
+                fields=["first_name", "last_name"]
+            )
+        ]
 
 
 class AirportSerializer(serializers.ModelSerializer):
