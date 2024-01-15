@@ -16,10 +16,13 @@ class Crew(models.Model):
 
 class Airport(models.Model):
     name = models.CharField(max_length=255)
-    closet_big_city = models.CharField(max_length=255)
+    closest_big_city = models.CharField(max_length=255)
+
+    class Meta:
+        unique_together = ("name", "closest_big_city")
 
     def __str__(self):
-        return f"{self.name} {self.closet_big_city}"
+        return f"{self.name} {self.closest_big_city}"
 
 
 class Route(models.Model):
