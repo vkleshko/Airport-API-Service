@@ -19,7 +19,12 @@ class Airport(models.Model):
     closest_big_city = models.CharField(max_length=255)
 
     class Meta:
-        unique_together = ("name", "closest_big_city")
+        constraints = [
+            models.UniqueConstraint(
+                fields=["name", "closest_big_city"],
+                name="unique_airport_name_closest_big_city"
+            )
+        ]
 
     def __str__(self):
         return f"{self.name} {self.closest_big_city}"

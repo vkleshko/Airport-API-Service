@@ -3,6 +3,7 @@ from django.utils import timezone
 from django.db import transaction
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
+from rest_framework.validators import UniqueTogetherValidator
 
 from airport_service.models import (
     Crew,
@@ -26,6 +27,12 @@ class AirportSerializer(serializers.ModelSerializer):
     class Meta:
         model = Airport
         fields = ("id", "name", "closest_big_city")
+        validators = [
+            UniqueTogetherValidator(
+                queryset=Airport.objects.all(),
+                fields=["name", "closest_big_city"]
+            )
+        ]
 
 
 class RouteCreateSerializer(serializers.ModelSerializer):
