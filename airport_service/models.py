@@ -7,6 +7,14 @@ class Crew(models.Model):
     first_name = models.CharField(max_length=255)
     last_name = models.CharField(max_length=255)
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["first_name", "last_name"],
+                name="unique_crew_first_name_last_name"
+            )
+        ]
+
     def __str__(self):
         return f"{self.first_name} {self.last_name}"
 
