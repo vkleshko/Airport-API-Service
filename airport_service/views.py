@@ -8,7 +8,7 @@ from drf_spectacular.utils import extend_schema, OpenApiParameter
 from rest_framework import mixins, status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.pagination import PageNumberPagination
-from rest_framework.permissions import IsAdminUser, IsAuthenticated
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 
@@ -44,7 +44,7 @@ from airport_service.serializers import (
 
 class ResultsSetPagination(PageNumberPagination):
     page_size = 10
-    page_size_query_param = 'page_size'
+    page_size_query_param = "page_size"
     max_page_size = 1000
 
 
@@ -57,7 +57,7 @@ class CrewViewSet(
     queryset = Crew.objects.all()
     serializer_class = CrewSerializer
     pagination_class = ResultsSetPagination
-    permission_classes = (IsAdminUser,)
+    permission_classes = (IsAdminOrIfAuthenticatedReadOnly,)
 
     def get_queryset(self):
         queryset = self.queryset
@@ -94,7 +94,7 @@ class AirportViewSet(
     queryset = Airport.objects.all()
     serializer_class = AirportSerializer
     pagination_class = ResultsSetPagination
-    permission_classes = (IsAdminUser,)
+    permission_classes = (IsAdminOrIfAuthenticatedReadOnly,)
 
     def get_queryset(self):
         queryset = self.queryset
@@ -128,7 +128,7 @@ class RouteViewSet(
         "source", "destination"
     )
     pagination_class = ResultsSetPagination
-    permission_classes = (IsAdminUser,)
+    permission_classes = (IsAdminOrIfAuthenticatedReadOnly,)
 
     def get_queryset(self):
         queryset = self.queryset
@@ -181,7 +181,7 @@ class AirplaneTypeViewSet(
     queryset = AirplaneType.objects.all()
     serializer_class = AirplaneTypeSerializer
     pagination_class = ResultsSetPagination
-    permission_classes = (IsAdminUser,)
+    permission_classes = (IsAdminOrIfAuthenticatedReadOnly,)
 
     def get_queryset(self):
         queryset = self.queryset
@@ -213,7 +213,7 @@ class AirplaneViewSet(
 ):
     queryset = Airplane.objects.select_related("airplane_type")
     pagination_class = ResultsSetPagination
-    permission_classes = (IsAdminUser,)
+    permission_classes = (IsAdminOrIfAuthenticatedReadOnly,)
 
     def get_queryset(self):
         queryset = self.queryset

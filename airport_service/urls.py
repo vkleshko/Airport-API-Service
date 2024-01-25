@@ -21,7 +21,7 @@ router.register("airplanes", AirplaneViewSet)
 router.register("orders", OrderViewSet)
 
 urlpatterns = [
-    path("flights/", flight_list, name="flights"),
+    path("flights/", flight_list, name="flight-list"),
     path("flights/<int:pk>/", flight_detail, name="flight-detail"),
     path("", include(router.urls)),
 ]

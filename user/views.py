@@ -1,7 +1,6 @@
 from rest_framework import generics, status
 from django.contrib.auth import get_user_model
 from rest_framework.authtoken.views import ObtainAuthToken
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.settings import api_settings
 from rest_framework.views import APIView
@@ -25,11 +24,14 @@ class UserCreateView(APIView):
             serializer.save()
             send_otp_to_email(serializer.data["email"])
 
-            return Response({
-                "status": 201,
-                "message": "Registration successfully. Check email for verification.",
-                "data": serializer.data
-            })
+            return Response(
+                status=status.HTTP_201_CREATED,
+                data=serializer.data,
+                headers={
+                    "message": "Registration successfully. "
+                               "Check email for verification."
+                }
+            )
 
         return Response(
             serializer.errors,
@@ -62,7 +64,9 @@ class VerifyOTPView(APIView):
                     return Response(
                         data=serializer.data,
                         status=status.HTTP_200_OK,
-                        headers={"message": "Registration successfully verified"}
+                        headers={
+                            "message": "Registration successfully verified"
+                        }
                     )
 
         except get_user_model().DoesNotExist:
