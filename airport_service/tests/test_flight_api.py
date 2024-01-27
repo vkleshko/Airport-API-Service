@@ -1,5 +1,7 @@
 import datetime
+from sqlite3 import IntegrityError
 
+from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Count, F
 from django.utils import timezone
 from django.contrib.auth import get_user_model
@@ -32,26 +34,28 @@ def detail_url(flight_id: int):
 
 
 def sample_flight(**params):
-    crew1 = Crew.objects.create(
-        first_name="test_first", last_name="test_last"
-    )
-    crew2 = Crew.objects.create(
-        first_name="test_first_2", last_name="test_last_2"
-    )
+    try:
+        crew1 = Crew.objects.get(id=1)
+        source = Airport.objects.get(id=1)
+        destination = Airport.objects.get(id=2)
+    except ObjectDoesNotExist:
+        crew1 = Crew.objects.create(
+            first_name="test_first", last_name="test_last"
+        )
+        source = Airport.objects.create(
+            name="test_source_name",
+            closest_big_city="test_city_source"
+        )
+        destination = Airport.objects.create(
+            name="test_destination_name",
+            closest_big_city="test_city_destination"
+        )
     airplane_type = AirplaneType.objects.create(name="test_type")
     airplane = Airplane.objects.create(
         name="test",
         rows=10,
         seats_in_rows=10,
         airplane_type=airplane_type
-    )
-    source = Airport.objects.create(
-        name="test_source_name",
-        closest_big_city="test_city_source"
-    )
-    destination = Airport.objects.create(
-        name="test_destination_name",
-        closest_big_city="test_city_destination"
     )
     route = Route.objects.create(
         source=source,
@@ -69,8 +73,7 @@ def sample_flight(**params):
     defaults.update(params)
 
     flight = Flight.objects.create(**defaults)
-    flight.crew.set((crew1, crew2))
-
+    flight.crew.set((crew1,))
     return flight
 
 
@@ -109,6 +112,46 @@ class AuthenticatedFlightApiTests(TestCase):
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(res.data, serializer.data)
+
+    def test_filtering_flight_by_source_and_destination(self):
+        source = Airport.objects.create(
+            name="test_name",
+            closest_big_city="test_city_replica_source"
+        )
+        destination = Airport.objects.create(
+            name="test_name_destination",
+            closest_big_city="test_city_replica_destination"
+        )
+        route = Route.objects.create(
+            source=source,
+            destination=destination,
+            distance=100
+        )
+
+        flight1 = sample_flight()
+        flight2 = sample_flight(route=route)
+
+        flights = Flight.objects.annotate(
+            available_tickets=F("airplane__rows")
+                              * F("airplane__seats_in_rows") - Count("tickets")
+        )
+
+        res = self.client.get(
+            FLIGHT_URL, {
+                "from": "test_city_source",
+                "to": "test_city_destination"
+            }
+        )
+
+        serializer1 = FlightListSerializer(
+            flights.get(id=flight1.id)
+        )
+        serializer2 = FlightListSerializer(
+            flights.get(id=flight2.id)
+        )
+
+        self.assertIn(serializer1.data, res.data)
+        self.assertNotIn(serializer2.data, res.data)
 
     def test_return_flight_empty_list_when_airplane_departed(self):
         departure_time = timezone.now() - datetime.timedelta(hours=2)

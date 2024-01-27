@@ -65,6 +65,34 @@ class AuthenticatedAirplaneApiTests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(res.data["results"], serializer.data)
 
+    def test_filtering_airplane_by_name(self):
+        airplane1 = sample_airplane()
+        airplane2 = sample_airplane(name="test_name_2")
+
+        res = self.client.get(AIRPLANE_URL, {"name": "test_name_2"})
+
+        serializer1 = AirplaneListSerializer(airplane1)
+        serializer2 = AirplaneListSerializer(airplane2)
+
+        self.assertIn(serializer2.data, res.data["results"])
+        self.assertNotIn(serializer1.data, res.data["results"])
+
+    def test_filtering_airplane_by_airplane_type(self):
+        airplane_type = AirplaneType.objects.create(name="test_airplane_type_2")
+
+        airplane1 = sample_airplane()
+        airplane2 = sample_airplane(airplane_type=airplane_type)
+
+        res = self.client.get(AIRPLANE_URL,
+                              {"airplane_type": "test_airplane_type_2"}
+                              )
+
+        serializer1 = AirplaneListSerializer(airplane1)
+        serializer2 = AirplaneListSerializer(airplane2)
+
+        self.assertIn(serializer2.data, res.data["results"])
+        self.assertNotIn(serializer1.data, res.data["results"])
+
     def test_retrieve_airplane_detail(self):
         airplane = sample_airplane()
 

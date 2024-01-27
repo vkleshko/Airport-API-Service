@@ -60,6 +60,21 @@ class AuthenticatedAirportApiTests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(res.data["results"], serializer.data)
 
+    def test_filtering_airport_by_name(self):
+        airport1 = sample_airport()
+        airport2 = sample_airport(
+            name="test_name_2",
+            closest_big_city="test_city"
+        )
+
+        res = self.client.get(AIRPORT_URL, {"name": "test_name_2"})
+
+        serializer1 = AirportSerializer(airport1)
+        serializer2 = AirportSerializer(airport2)
+
+        self.assertIn(serializer2.data, res.data["results"])
+        self.assertNotIn(serializer1.data, res.data["results"])
+
     def test_create_airport_forbidden(self):
         payload = {
             "name": "test_name",

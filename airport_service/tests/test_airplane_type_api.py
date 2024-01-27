@@ -59,6 +59,18 @@ class AuthenticatedAirplaneTypeApiTests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(res.data["results"], serializer.data)
 
+    def test_filtering_airplane_type_by_name(self):
+        airplane_type1 = sample_airplane_type()
+        airplane_type2 = sample_airplane_type(name="test_name_2")
+
+        res = self.client.get(AIRPLANE_TYPE_URL, {"name": "test_name_2"})
+
+        serializer1 = AirplaneTypeSerializer(airplane_type1)
+        serializer2 = AirplaneTypeSerializer(airplane_type2)
+
+        self.assertIn(serializer2.data, res.data["results"])
+        self.assertNotIn(serializer1.data, res.data["results"])
+
     def test_create_airplane_type_forbidden(self):
         payload = {
             "name": "test",

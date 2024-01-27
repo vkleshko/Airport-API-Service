@@ -263,12 +263,12 @@ class AirplaneViewSet(
         OpenApiParameter(
             "from",
             type=str,
-            description="Filter flights by source city (ex. ?city=Kyiv)",
+            description="Filter flights by source city (ex. ?from=Kyiv)",
         ),
         OpenApiParameter(
             "to",
             type=str,
-            description="Filter flights by destination city (ex. ?city=London)",
+            description="Filter flights by destination city (ex. ?to=London)",
         ),
         OpenApiParameter(
             "departure_time",
@@ -313,12 +313,12 @@ def flight_list(request):
 
         if from_:
             flights = flights.filter(
-                route__source__closet_big_city__icontains=from_
+                route__source__closest_big_city__icontains=from_
             )
 
         if to:
             flights = flights.filter(
-                route__destination__closet_big_city__icontains=to
+                route__destination__closest_big_city__icontains=to
             )
 
         if departure:

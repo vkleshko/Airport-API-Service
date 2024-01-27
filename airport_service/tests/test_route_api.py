@@ -26,7 +26,7 @@ def sample_route(**params):
         closest_big_city="test_city_source"
     )
     destination = Airport.objects.create(
-        name="test_name",
+        name="test_name_destination",
         closest_big_city="test_city_destination"
     )
     defaults = {
@@ -71,6 +71,31 @@ class AuthenticatedRouteApiTests(TestCase):
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(res.data["results"], serializer.data)
+
+    def test_filtering_route_by_source_and_destination(self):
+        route1 = sample_route()
+        source = Airport.objects.create(
+            name="test_source",
+            closest_big_city="test_city_source_2"
+        )
+        destination = Airport.objects.create(
+            name="test_destination",
+            closest_big_city="test_city_destination_2"
+        )
+        route2 = Route.objects.create(
+            source=source, destination=destination, distance=100
+        )
+
+        res = self.client.get(
+            ROUTE_URL,
+            {"from": "test_name", "to": "test_name_destination"}
+        )
+
+        serializer1 = RouteListSerializer(route1)
+        serializer2 = RouteListSerializer(route2)
+
+        self.assertIn(serializer1.data, res.data["results"])
+        self.assertNotIn(serializer2.data, res.data["results"])
 
     def test_retrieve_route_detail(self):
         route = sample_route()

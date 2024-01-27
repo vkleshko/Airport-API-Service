@@ -60,6 +60,20 @@ class AuthenticatedCrewApiTests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(res.data["results"], serializer.data)
 
+    def test_filtering_crew_by_full_name(self):
+        crew1 = sample_crew()
+        crew2 = sample_crew(
+            first_name="test_2", last_name="test_2"
+        )
+
+        res = self.client.get(CREW_URL, {"full_name": "test test"})
+
+        serializer1 = CrewSerializer(crew1)
+        serializer2 = CrewSerializer(crew2)
+
+        self.assertIn(serializer1.data, res.data["results"])
+        self.assertNotIn(serializer2.data, res.data["results"])
+
     def test_create_crew_forbidden(self):
         payload = {
             "first_name": "test",
