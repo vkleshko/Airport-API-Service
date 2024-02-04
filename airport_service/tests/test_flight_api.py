@@ -1,5 +1,4 @@
 import datetime
-from sqlite3 import IntegrityError
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Count, F
