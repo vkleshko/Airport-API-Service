@@ -1,11 +1,15 @@
+import os
 import random
 from mailjet_rest import Client
 from django.contrib.auth import get_user_model
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 def send_otp_to_email(email):
-    api_key = "8fce510ecab9b7dcf0ef0103232a8056"
-    api_secret = "75c6bc5de33849447cc6d94af7716f0c"
+    api_key = os.environ["API_KEY"]
+    api_secret = os.environ["API_SECRET"]
     mailjet = Client(auth=(api_key, api_secret), version='v3.1')
 
     subject = "Your account verification email"
